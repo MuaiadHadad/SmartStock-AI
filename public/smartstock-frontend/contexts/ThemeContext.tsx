@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from "react";
 
-type Theme = 'light' | 'dark';
+type Theme = "light" | "dark";
 
 interface ThemeContextType {
     theme: Theme;
@@ -11,56 +11,46 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
+function getInitialTheme(): Theme {
+    if (typeof window === "undefined") {
+        return "dark";
+    }
+    const stored = localStorage.getItem("theme");
+    if (stored === "light" || stored === "dark") {
+        return stored;
+    }
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-    const [theme, setTheme] = useState<Theme>('dark');
-    const [mounted, setMounted] = useState(false);
+    const [theme, setTheme] = useState<Theme>(() => getInitialTheme());
 
     useEffect(() => {
-        setMounted(true);
-        // Carregar tema salvo do localStorage
-        const savedTheme = localStorage.getItem('theme') as Theme | null;
-        if (savedTheme) {
-            setTheme(savedTheme);
-            document.documentElement.classList.remove('light', 'dark');
-            document.documentElement.classList.add(savedTheme);
-            document.documentElement.setAttribute('data-theme', savedTheme);
-        } else {
-            // Detectar preferência do sistema
-            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            const initialTheme = prefersDark ? 'dark' : 'light';
-            setTheme(initialTheme);
-            document.documentElement.classList.remove('light', 'dark');
-            document.documentElement.classList.add(initialTheme);
-            document.documentElement.setAttribute('data-theme', initialTheme);
+        if (typeof document === "undefined") {
+            return;
         }
-    }, []);
-
-    useEffect(() => {
-        if (!mounted) return;
-
         const root = document.documentElement;
-        root.classList.remove('light', 'dark');
+        root.classList.remove("light", "dark");
         root.classList.add(theme);
-        root.setAttribute('data-theme', theme);
-        localStorage.setItem('theme', theme);
-    }, [theme, mounted]);
+        root.setAttribute("data-theme", theme);
+        try {
+            localStorage.setItem("theme", theme);
+        } catch (error) {
+            console.warn("Não foi possível guardar o tema", error);
+        }
+    }, [theme]);
 
     const toggleTheme = () => {
-        setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+        setTheme((prev) => (prev === "dark" ? "light" : "dark"));
     };
 
-
-    return (
-        <ThemeContext.Provider value={{ theme, toggleTheme }}>
-            {children}
-        </ThemeContext.Provider>
-    );
+    return <ThemeContext.Provider value={{ theme, toggleTheme }}>{children}</ThemeContext.Provider>;
 }
 
 export function useTheme() {
     const context = useContext(ThemeContext);
     if (context === undefined) {
-        throw new Error('useTheme must be used within a ThemeProvider');
+        throw new Error("useTheme must be used within a ThemeProvider");
     }
     return context;
 }

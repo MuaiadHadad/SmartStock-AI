@@ -1,8 +1,12 @@
 @import "tailwindcss";
 
 @layer base {
-    /* Dark Mode (padrão) */
+    :root {
+        color-scheme: light;
+    }
+
     :root.dark {
+        color-scheme: dark;
         --bg-primary: rgb(2 6 23);
         --bg-secondary: rgb(15 23 42);
         --bg-tertiary: rgb(30 41 59);
@@ -10,6 +14,10 @@
         --text-secondary: rgb(148 163 184);
         --border-color: rgb(51 65 85);
         --accent-color: rgb(16 185 129);
+        --surface-raised: rgba(15, 23, 42, 0.7);
+        --surface-raised-strong: rgba(10, 16, 32, 0.85);
+        --surface-soft: rgba(51, 65, 85, 0.35);
+        --shadow-color: rgba(2, 6, 23, 0.55);
     }
 
     /* Light Mode */
@@ -21,6 +29,10 @@
         --text-secondary: rgb(71 85 105);
         --border-color: rgb(203 213 225);
         --accent-color: rgb(16 185 129);
+        --surface-raised: rgba(255, 255, 255, 0.82);
+        --surface-raised-strong: rgba(255, 255, 255, 0.94);
+        --surface-soft: rgba(15, 23, 42, 0.08);
+        --shadow-color: rgba(15, 23, 42, 0.14);
     }
 
     body {
@@ -114,8 +126,111 @@
 
     /* Glass effect */
     .glass {
-        background: rgba(15, 23, 42, 0.7);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(51, 65, 85, 0.5);
+        background: var(--surface-raised);
+        backdrop-filter: blur(12px);
+        border: 1px solid color-mix(in srgb, var(--border-color) 65%, transparent);
+        box-shadow: 0 20px 40px -24px var(--shadow-color);
+    }
+
+    .glass-strong {
+        background: var(--surface-raised-strong);
+        backdrop-filter: blur(18px);
+        border: 1px solid color-mix(in srgb, var(--border-color) 80%, transparent);
+        box-shadow: 0 24px 46px -24px var(--shadow-color);
+    }
+
+    .surface-soft {
+        background: var(--surface-soft);
+    }
+
+    .text-subtle {
+        color: var(--text-secondary);
+    }
+
+    /* Animated gradient blobs */
+    .animate-blob {
+        animation: blob 18s infinite;
+    }
+
+    .animate-blob-delayed {
+        animation: blob 20s infinite;
+        animation-delay: 4s;
+    }
+
+    @keyframes blob {
+        0% {
+            transform: translate(0px, 0px) scale(1);
+        }
+        33% {
+            transform: translate(30px, -40px) scale(1.1);
+        }
+        66% {
+            transform: translate(-20px, 20px) scale(0.95);
+        }
+        100% {
+            transform: translate(0px, 0px) scale(1);
+        }
+    }
+
+    /* Subtle grid background */
+    .bg-grid {
+        background-size: 40px 40px;
+        background-image:
+            linear-gradient(
+                to right,
+                color-mix(in srgb, var(--border-color) 12%, transparent) 1px,
+                transparent 1px
+            ),
+            linear-gradient(
+                to bottom,
+                color-mix(in srgb, var(--border-color) 12%, transparent) 1px,
+                transparent 1px
+            );
+    }
+
+    .bg-radial-fade {
+        background:
+            radial-gradient(
+                circle at top,
+                color-mix(in srgb, var(--accent-color) 25%, transparent) 0%,
+                transparent 60%
+            ),
+            radial-gradient(
+                circle at bottom right,
+                color-mix(in srgb, rgba(6, 182, 212, 1) 18%, transparent) 0%,
+                transparent 50%
+            );
+    }
+
+    .border-gradient {
+        position: relative;
+    }
+
+    .border-gradient::before {
+        content: "";
+        position: absolute;
+        inset: -1px;
+        border-radius: inherit;
+        background: linear-gradient(120deg, rgba(16, 185, 129, 0.55), rgba(6, 182, 212, 0.35));
+        z-index: -1;
+        opacity: 0.8;
+    }
+
+    .shine {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .shine::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(120deg, transparent 25%, rgba(255, 255, 255, 0.18) 50%, transparent 75%);
+        transform: translateX(-100%);
+        transition: transform 0.8s ease;
+    }
+
+    .shine:hover::after {
+        transform: translateX(100%);
     }
 }
