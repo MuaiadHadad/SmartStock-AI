@@ -3,18 +3,61 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Brain, Boxes, TrendingUp, Shield } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { api } from "@/lib/api";
+
+interface HeroForecastResponse {
+  product_id: number;
+  rupture_date: string | null;
+  data: { date: string; predicted_stock: number }[];
+}
 
 export default function Home() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const [heroForecast, setHeroForecast] = useState<HeroForecastResponse | null>(null);
+  const [hasToken, setHasToken] = useState(false);
+  const [forecastLoading, setForecastLoading] = useState(false);
 
   useEffect(() => {
     if (!loading && user) {
       router.replace("/inventory");
     }
   }, [loading, user, router]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    let active = true;
+    const bootstrap = async () => {
+      const token = window.localStorage.getItem("ss_token");
+      if (!active) return;
+      if (!token) {
+        setHasToken(false);
+        setHeroForecast(null);
+        return;
+      }
+      setHasToken(true);
+      const demoProduct = Number(process.env.NEXT_PUBLIC_DEMO_PRODUCT_ID || 1);
+      setForecastLoading(true);
+      try {
+        const data = await api.forecast(demoProduct, 14);
+        if (!active) return;
+        setHeroForecast(data);
+      } catch {
+        if (!active) return;
+        setHeroForecast(null);
+      } finally {
+        if (active) {
+          setForecastLoading(false);
+        }
+      }
+    };
+    bootstrap();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   if (loading || user) {
     return null;
@@ -89,19 +132,7 @@ export default function Home() {
           transition={{ delay: 0.15, duration: 0.6 }}
           className="glass rounded-2xl border border-transparent p-6 shadow-xl"
         >
-          <div className="relative aspect-[16/10] overflow-hidden rounded-xl bg-gradient-to-br from-white/80 via-slate-100/80 to-slate-200/80 shadow-inner dark:from-slate-900 dark:via-slate-900/90 dark:to-slate-950">
-            <div className="absolute inset-0 grid place-items-center">
-              <div className="space-y-2 text-center">
-                <div className="mb-2 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-600 shadow-sm dark:text-emerald-300">
-                  <Boxes className="h-6 w-6" />
-                </div>
-                <p className="text-lg font-semibold">Dashboard Inteligente</p>
-                <p className="text-sm text-slate-600 dark:text-slate-400">Demonstração visual do seu stock e recomendações</p>
-              </div>
-            </div>
-            <div className="absolute -bottom-12 -left-12 h-48 w-48 rounded-full bg-emerald-500/10 blur-3xl" />
-            <div className="absolute -top-12 -right-12 h-48 w-48 rounded-full bg-cyan-500/10 blur-3xl" />
-          </div>
+          <HeroForecastCard forecast={heroForecast} loading={forecastLoading} hasToken={hasToken} />
         </motion.div>
       </div>
     </div>
@@ -116,6 +147,69 @@ function Feature({ icon, title, desc }: { icon: React.ReactNode; title: string; 
         <p className="font-medium">{title}</p>
         <p className="text-sm text-slate-600 dark:text-slate-400">{desc}</p>
       </div>
+    </div>
+  );
+}
+
+function HeroForecastCard({
+  forecast,
+  loading,
+  hasToken,
+}: {
+  forecast: HeroForecastResponse | null;
+  loading: boolean;
+  hasToken: boolean;
+}) {
+  const points = forecast?.data ?? [];
+  const max = Math.max(...points.map((p) => p.predicted_stock), 1);
+  const min = 0;
+  const path = points
+    .map((pt, idx) => {
+      const x = (idx / Math.max(points.length - 1, 1)) * 100;
+      const y = ((max - pt.predicted_stock) / Math.max(max - min, 1)) * 100;
+      return `${idx === 0 ? "M" : "L"}${x},${y}`;
+    })
+    .join(" ");
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <p className="text-xs uppercase tracking-[0.35em] text-slate-500 dark:text-slate-400">Visão executiva</p>
+        <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Previsão em tempo real</h2>
+        <p className="text-sm text-slate-600 dark:text-slate-400">Curvas alimentadas pelos endpoints /ai/forecast.</p>
+      </div>
+      {loading ? (
+        <div className="h-48 animate-pulse rounded-2xl bg-slate-200/70 dark:bg-slate-900/60" />
+      ) : points.length ? (
+        <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 shadow-inner dark:border-slate-800/70 dark:bg-slate-900/70">
+          <svg viewBox="0 0 100 100" className="h-40 w-full overflow-visible">
+            <defs>
+              <linearGradient id="heroLine" x1="0%" x2="100%" y1="0%" y2="0%">
+                <stop offset="0%" stopColor="#34d399" />
+                <stop offset="100%" stopColor="#22d3ee" />
+              </linearGradient>
+              <linearGradient id="heroFill" x1="0%" x2="0%" y1="0%" y2="100%">
+                <stop offset="0%" stopColor="#34d39933" />
+                <stop offset="100%" stopColor="#22d3ee00" />
+              </linearGradient>
+            </defs>
+            <path d={`${path} L100,100 L0,100 Z`} fill="url(#heroFill)" stroke="none" />
+            <path d={path} fill="none" stroke="url(#heroLine)" strokeWidth={2.4} strokeLinecap="round" />
+          </svg>
+          <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-300">
+            <span>Produto #{forecast?.product_id}</span>
+            <span>
+              Ruptura prevista: {forecast?.rupture_date ? new Date(forecast.rupture_date).toLocaleDateString() : "Sem risco"}
+            </span>
+          </div>
+        </div>
+      ) : (
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          {hasToken
+            ? "Selecione um produto autenticado para destravar o gráfico de previsão."
+            : "Entre na plataforma para alimentar este gráfico com dados reais do seu stock."}
+        </p>
+      )}
     </div>
   );
 }

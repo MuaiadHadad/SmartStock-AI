@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { api } from "@/lib/api";
 import Protected from "@/components/Protected";
 import { motion } from "framer-motion";
@@ -10,6 +10,14 @@ interface Product {
   name: string;
 }
 
+interface Recommendation {
+  product_id: number;
+  name: string;
+  recommended_purchase_qty: number;
+  cmd: number;
+  reason: string;
+}
+
 export default function MovementsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [productId, setProductId] = useState<number | "">("");
@@ -18,20 +26,48 @@ export default function MovementsPage() {
   const [reason, setReason] = useState("compra");
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+  const [aiError, setAiError] = useState<string | null>(null);
 
   useEffect(() => {
-    let mounted = true;
-    (async () => {
+    let active = true;
+    const fetchProducts = async () => {
       try {
         const res = await api.products({});
-        if (mounted) setProducts(res.data || []);
-      } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : 'Erro ao carregar produtos';
-        if (mounted) setError(msg);
+        if (!active) return;
+        setProducts(res.data || []);
+      } catch (err) {
+        if (!active) return;
+        setError(err instanceof Error ? err.message : "Não foi possível carregar produtos");
       }
-    })();
-    return () => { mounted = false; };
+    };
+
+    const fetchRecommendations = async () => {
+      setAiError(null);
+      try {
+        const res = await api.recommendations();
+        if (!active) return;
+        setRecommendations(res);
+      } catch (err) {
+        if (!active) return;
+        setAiError(err instanceof Error ? err.message : "Não foi possível carregar sugestões");
+      }
+    };
+
+    fetchProducts();
+    fetchRecommendations();
+    return () => {
+      active = false;
+    };
   }, []);
+
+  const recommendationMap = useMemo(() => {
+    const map = new Map<number, Recommendation>();
+    recommendations.forEach((rec) => map.set(rec.product_id, rec));
+    return map;
+  }, [recommendations]);
+
+  const selectedSuggestion = typeof productId === "number" ? recommendationMap.get(productId) : null;
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -44,9 +80,8 @@ export default function MovementsPage() {
     try {
       const res = await api.createMovement({ product_id: Number(productId), type, quantity, reason });
       setMessage(`Movimento criado. Stock atual: ${res.current_stock}`);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Erro ao criar movimento';
-      setError(msg);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Não foi possível registar movimento");
     }
   }
 
@@ -88,10 +123,11 @@ export default function MovementsPage() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.1, duration: 0.4 }}
         >
-          <form onSubmit={submit} className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <label className="text-xs uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">Produto</label>
+          <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
+            <form onSubmit={submit} className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <label className="text-xs uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">Produto</label>
                 <div className="relative">
                   <select
                     value={productId}
@@ -109,6 +145,29 @@ export default function MovementsPage() {
                     SKU
                   </span>
                 </div>
+                {selectedSuggestion && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="rounded-2xl border border-emerald-200/70 bg-emerald-50/70 px-3 py-2 text-xs text-emerald-700 shadow-sm dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="font-semibold">IA sugere +{selectedSuggestion.recommended_purchase_qty} u.</p>
+                      <button
+                        type="button"
+                        className="text-[11px] font-semibold uppercase tracking-[0.25em] text-emerald-600 hover:text-emerald-500 dark:text-emerald-200"
+                        onClick={() => {
+                          setType("IN");
+                          setQuantity(selectedSuggestion.recommended_purchase_qty);
+                          setReason(selectedSuggestion.reason);
+                        }}
+                      >
+                        Aplicar
+                      </button>
+                    </div>
+                    <p className="mt-1 text-[11px] text-emerald-600/80 dark:text-emerald-200/70">{selectedSuggestion.reason} • CMD {selectedSuggestion.cmd.toFixed(1)} u/dia</p>
+                  </motion.div>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -162,7 +221,39 @@ export default function MovementsPage() {
               <ClipboardCheck className="h-4 w-4" />
               Registar movimento
             </motion.button>
-          </form>
+            </form>
+
+            <div className="rounded-3xl border border-slate-200/70 bg-white/80 p-4 shadow-inner dark:border-slate-800/60 dark:bg-slate-900/50">
+              <div className="flex items-center justify-between pb-3">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">Fila de reposição</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-300">Sugestões automáticas das últimas 24h</p>
+                </div>
+                <Sparkles className="h-4 w-4 text-emerald-500 dark:text-emerald-300" />
+              </div>
+              <div className="space-y-3">
+                {recommendations.slice(0, 5).map((rec) => (
+                  <button
+                    type="button"
+                    key={rec.product_id}
+                    onClick={() => setProductId(rec.product_id)}
+                    className={`w-full rounded-2xl border px-3 py-2 text-left text-xs transition ${
+                      rec.product_id === productId
+                        ? "border-emerald-500/60 bg-emerald-500/15 text-emerald-700 dark:border-emerald-400/50 dark:text-emerald-200"
+                        : "border-slate-200/70 bg-white/70 text-slate-600 hover:border-emerald-400/50 dark:border-slate-800/60 dark:bg-slate-900/50 dark:text-slate-300"
+                    }`}
+                  >
+                    <p className="font-semibold text-slate-900 dark:text-slate-100">{rec.name}</p>
+                    <p className="text-[11px] uppercase tracking-[0.3em] text-slate-400 dark:text-slate-500">Comprar +{rec.recommended_purchase_qty} • CMD {rec.cmd.toFixed(1)}</p>
+                  </button>
+                ))}
+                {!recommendations.length && (
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Sem alertas de reposição no momento.</p>
+                )}
+                {aiError && <p className="text-xs text-red-500 dark:text-red-300">{aiError}</p>}
+              </div>
+            </div>
+          </div>
 
           {message && (
             <motion.div
