@@ -3,5 +3,6 @@
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return redirect('/smartstock-frontend/login');
+    // Redirect the root URL to the Next.js app homepage (app/page.tsx)
+    return redirect('/smartstock-frontend');
 });

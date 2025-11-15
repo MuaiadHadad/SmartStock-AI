@@ -2,8 +2,25 @@
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Brain, Boxes, TrendingUp, Shield } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function Home() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && user) {
+      router.replace('/inventory');
+    }
+  }, [loading, user, router]);
+
+  if (loading || user) {
+    // Loading or redirecting if already logged in
+    return null;
+  }
+
   return (
     <div className="relative min-h-[calc(100vh-2rem)] flex items-center">
       {/* Background gradient orbs */}

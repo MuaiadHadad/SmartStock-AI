@@ -1,8 +1,9 @@
 "use client";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { motion } from 'framer-motion';
+import Link from 'next/link';
 
 export default function LoginPage(){
   const [email,setEmail] = useState('admin@example.com');
@@ -10,13 +11,26 @@ export default function LoginPage(){
   const [loading,setLoading] = useState(false);
   const [error,setError] = useState<string|null>(null);
   const router = useRouter();
-  const { login } = useAuth();
+  const { login, user, loading: authLoading } = useAuth();
+
+  useEffect(() => {
+    if (!authLoading && user) {
+      router.replace('/inventory');
+    }
+  }, [authLoading, user, router]);
 
   async function submit(e:React.FormEvent){
     e.preventDefault(); setLoading(true); setError(null);
     try { await login(email,password); router.push('/inventory'); }
-    catch(err:any){ setError(err.message); }
+    catch(err: unknown){
+      const message = err instanceof Error ? err.message : 'Erro ao entrar';
+      setError(message);
+    }
     finally{ setLoading(false); }
+  }
+
+  if (authLoading || user) {
+    return null; // aguardando estado de auth ou já redirecionando
   }
 
   return (
@@ -46,7 +60,7 @@ export default function LoginPage(){
           <input type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="password" className="w-full bg-slate-900/40 border border-slate-700 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
         </div>
         <button disabled={loading} className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-semibold py-2 rounded transition disabled:opacity-50">{loading? 'Entrando...' : 'Entrar'}</button>
-        <p className="text-sm text-slate-400">Não tem conta? <a href="/register" className="text-emerald-400 hover:underline">Criar conta</a></p>
+        <p className="text-sm text-slate-400">Não tem conta? <Link href="/register" className="text-emerald-400 hover:underline">Criar conta</Link></p>
       </motion.form>
     </div>
   );
