@@ -1,6 +1,13 @@
 export interface ApiConfig { baseUrl: string; token?: string; }
 
-let config: ApiConfig = { baseUrl: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api' };
+// Domain types
+export type Role = 'admin' | 'manager' | 'operator';
+export interface User { id: number; name: string; email: string; role?: Role; active?: boolean }
+export interface Product { id: number; name: string; sku: string; current_stock: number; min_stock: number }
+export interface StockMovement { id: number; product_id: number; type: 'IN' | 'OUT'; quantity: number; reason: string; occurred_at: string }
+export interface Paginated<T> { data: T[]; [key: string]: unknown }
+
+const config: ApiConfig = { baseUrl: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api' };
 
 if (typeof window !== 'undefined') {
   const saved = window.localStorage.getItem('ss_token');
@@ -22,11 +29,26 @@ async function request<T>(path: string, opts: RequestInit = {}): Promise<T> {
   if (config.token) headers['Authorization'] = `Bearer ${config.token}`;
   const res = await fetch(`${config.baseUrl}${path}`, { ...opts, headers });
   if (!res.ok) {
-    let data: any = null;
-    try { data = await res.json(); } catch {}
-    throw new Error(data?.error || `Erro ${res.status}`);
+    let data: unknown = null;
+    try {
+      const text = await res.text();
+      data = text ? JSON.parse(text) : null;
+    } catch {}
+    const message = typeof data === 'object' && data && 'error' in (data as Record<string, unknown>) && typeof (data as Record<string, unknown>).error === 'string'
+      ? String((data as Record<string, unknown>).error)
+      : `Erro ${res.status}`;
+    throw new Error(message);
   }
-  return res.json();
+  // No content
+  if (res.status === 204) return undefined as unknown as T;
+  // Try JSON, fallback to text
+  const contentType = res.headers.get('content-type') || '';
+  if (contentType.includes('application/json')) {
+    return res.json() as Promise<T>;
+  } else {
+    const text = await res.text();
+    return (text as unknown) as T;
+  }
 }
 
 export const fetchForecast = (productId: number, days = 30) =>
