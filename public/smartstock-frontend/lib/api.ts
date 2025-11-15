@@ -51,20 +51,31 @@ async function request<T>(path: string, opts: RequestInit = {}): Promise<T> {
   }
 }
 
+export const fetchForecast = (productId: number, days = 30) =>
+  request<any>(`/ai/forecast/${productId}?days=${days}`);
+
+export const fetchRecommendations = () => request<any>('/ai/recommendations');
+
 export const api = {
-  login: (email: string, password: string) => request<{token:string; user: User}>('/auth/login', { method:'POST', body: JSON.stringify({email,password}) }),
-  me: () => request<User>('/auth/me'),
-  products: (params: Record<string,string|number|boolean> = {}) => {
+  login: (email: string, password: string) => request<{ token: string; user: any }>('/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ email, password }),
+  }),
+  me: () => request<any>('/auth/me'),
+  products: (params: Record<string, string | number | boolean> = {}) => {
     const query = new URLSearchParams();
-    Object.entries(params).forEach(([k,v]) => { if (v!==undefined && v!==null) query.set(k,String(v)); });
-    return request<Paginated<Product>>(`/products?${query.toString()}`);
+    Object.entries(params).forEach(([k, v]) => {
+      if (v !== undefined && v !== null) query.set(k, String(v));
+    });
+    return request<any>(`/products?${query.toString()}`);
   },
-  createMovement: (data: {product_id:number; type:'IN'|'OUT'; quantity:number; reason:string}) => request<{ movement: StockMovement; current_stock: number }>(
-    '/stock-movements', { method:'POST', body: JSON.stringify(data) }
-  ),
-  _forecast: (productId:number, days=30) => request<{ product_id:number; days:number; cmd:number; data: Array<{date:string; predicted_stock:number}>; rupture_date: string | null }>(`/ai/forecast/${productId}?days=${days}`),
-  _recommendations: () => request<Array<{ product_id:number; sku:string; name:string; current_stock:number; min_stock:number; cmd:number; recommended_purchase_qty:number; reason:string }>>('/ai/recommendations'),
-  register: (data: {name:string; email:string; password:string}) => request<{token:string; user: User}>('/auth/register', { method:'POST', body: JSON.stringify(data) }),
-  logout: () => request<void>('/auth/logout', { method:'POST' }),
-  createUser: (data: {name:string; email:string; password:string; role:Role}) => request<User>('/users', { method:'POST', body: JSON.stringify(data) }),
+  createMovement: (data: { product_id: number; type: 'IN' | 'OUT'; quantity: number; reason: string }) =>
+    request<any>('/stock-movements', { method: 'POST', body: JSON.stringify(data) }),
+  forecast: fetchForecast,
+  recommendations: fetchRecommendations,
+  register: (data: { name: string; email: string; password: string }) =>
+    request<{ token: string; user: any }>('/auth/register', { method: 'POST', body: JSON.stringify(data) }),
+  logout: () => request<any>('/auth/logout', { method: 'POST' }),
+  createUser: (data: { name: string; email: string; password: string; role: 'admin' | 'manager' | 'operator' }) =>
+    request<any>('/users', { method: 'POST', body: JSON.stringify(data) }),
 };

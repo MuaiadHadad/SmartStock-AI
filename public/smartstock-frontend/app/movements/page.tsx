@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
-import { api } from "@/lib/api";
+import { api, fetchRecommendations as fetchAiRecommendations } from "@/lib/api";
 import Protected from "@/components/Protected";
 import { motion } from "framer-motion";
 import { Sparkles, ArrowLeftRight, ClipboardCheck } from "lucide-react";
@@ -45,7 +45,7 @@ export default function MovementsPage() {
     const fetchRecommendations = async () => {
       setAiError(null);
       try {
-        const res = await api.recommendations();
+        const res = await fetchAiRecommendations();
         if (!active) return;
         setRecommendations(res);
       } catch (err) {

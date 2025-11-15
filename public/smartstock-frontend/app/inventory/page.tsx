@@ -1,7 +1,7 @@
 "use client";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { api } from "@/lib/api";
+import { api, fetchForecast, fetchRecommendations } from "@/lib/api";
 import Protected from "@/components/Protected";
 import { AnimatePresence, motion } from "framer-motion";
 import { Boxes, AlertTriangle, TrendingUp, Sparkles, CalendarClock } from "lucide-react";
@@ -54,7 +54,7 @@ export default function InventoryPage() {
     setInsightsLoading(true);
     setAiError(null);
     try {
-      const recs = await api.recommendations();
+      const recs = await fetchRecommendations();
       setRecommendations(recs);
       setForecastProductId((prev) => {
         if (prev && nextProducts.some((p) => p.id === prev)) {
@@ -98,11 +98,11 @@ export default function InventoryPage() {
 
   useEffect(() => {
     let active = true;
-    async function fetchForecast(productId: number) {
+    async function loadForecast(productId: number) {
       setForecastLoading(true);
       setAiError(null);
       try {
-        const res = await api.forecast(productId, 21);
+        const res = await fetchForecast(productId, 21);
         if (!active) return;
         setForecastData(res);
       } catch (err) {
@@ -117,7 +117,7 @@ export default function InventoryPage() {
     }
 
     if (forecastProductId) {
-      fetchForecast(forecastProductId);
+      loadForecast(forecastProductId);
     } else {
       setForecastData(null);
     }
