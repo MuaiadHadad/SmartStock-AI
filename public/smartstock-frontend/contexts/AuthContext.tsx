@@ -1,9 +1,9 @@
 'use client';
 import { createContext, useContext, useEffect, useState } from 'react';
-import { api, clearToken, setToken } from '@/lib/api';
+import { api, clearToken, setToken, type User } from '@/lib/api';
 
 interface AuthContextType {
-  user: any|null;
+  user: User|null;
   loading: boolean;
   login: (email:string, password:string)=>Promise<void>;
   register: (name:string, email:string, password:string)=>Promise<void>;
@@ -13,7 +13,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType|undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }){
-  const [user,setUser] = useState<any|null>(null);
+  const [user,setUser] = useState<User|null>(null);
   const [loading,setLoading] = useState(true);
 
   useEffect(()=>{
@@ -36,7 +36,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }){
   }
 
   async function logout(){
-    try { await api.logout(); } catch {}
+    try { await api.logout(); } catch {/* ignore */}
     clearToken();
     setUser(null);
   }

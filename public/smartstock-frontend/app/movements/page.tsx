@@ -19,17 +19,18 @@ export default function MovementsPage() {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  async function loadProducts() {
-    try {
-      const res = await api.products({});
-      setProducts(res.data || []);
-    } catch (err: any) {
-      setError(err.message);
-    }
-  }
-
   useEffect(() => {
-    loadProducts();
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await api.products({});
+        if (mounted) setProducts(res.data || []);
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : 'Erro ao carregar produtos';
+        if (mounted) setError(msg);
+      }
+    })();
+    return () => { mounted = false; };
   }, []);
 
   async function submit(e: React.FormEvent) {
@@ -43,8 +44,9 @@ export default function MovementsPage() {
     try {
       const res = await api.createMovement({ product_id: Number(productId), type, quantity, reason });
       setMessage(`Movimento criado. Stock atual: ${res.current_stock}`);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Erro ao criar movimento';
+      setError(msg);
     }
   }
 

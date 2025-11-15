@@ -28,8 +28,9 @@ export default function UsersPage() {
       setEmail("");
       setPassword("");
       setRole("operator");
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Erro ao criar utilizador';
+      setError(msg);
     }
   }
 

@@ -21,47 +21,41 @@ export default function InventoryPage() {
   const [search, setSearch] = useState("");
   const [isFiltering, setIsFiltering] = useState(false);
 
-  async function load({ showSkeleton = true } = {}) {
-    if (showSkeleton) {
-      setLoading(true);
-    } else {
-      setIsFiltering(true);
-    }
+  async function filterProducts() {
+    setIsFiltering(true);
     setError(null);
     try {
       const res = await api.products({ search });
       setProducts(res.data || []);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Erro ao carregar';
+      setError(msg);
     } finally {
-      if (showSkeleton) {
-        setLoading(false);
-      }
       setIsFiltering(false);
     }
   }
 
   useEffect(() => {
-    load();
+    let mounted = true;
+    (async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const res = await api.products({});
+        if (mounted) setProducts(res.data || []);
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : 'Erro ao carregar';
+        if (mounted) setError(msg);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    })();
+    return () => { mounted = false; };
   }, []);
 
   const metrics = useMemo(() => {
     const totalProducts = products.length;
     const lowStock = products.filter((p) => p.current_stock <= p.min_stock).length;
-    const totalUnits = products.reduce((acc, p) => acc + p.current_stock, 0);
-    const coverage = totalProducts ? Math.round((1 - lowStock / Math.max(totalProducts, 1)) * 100) : 100;
-    return { totalProducts, lowStock, totalUnits, coverage };
-  }, [products]);
-
-  const rowVariants = {
-    hidden: { opacity: 0, y: 8 },
-    visible: { opacity: 1, y: 0 },
-    exit: { opacity: 0, y: -8 },
-  };
-
-  const metrics = useMemo(() => {
-    const totalProducts = products.length;
-    const lowStock = products.filter(p => p.current_stock <= p.min_stock).length;
     const totalUnits = products.reduce((acc, p) => acc + p.current_stock, 0);
     const coverage = totalProducts ? Math.round((1 - lowStock / Math.max(totalProducts, 1)) * 100) : 100;
     return { totalProducts, lowStock, totalUnits, coverage };
@@ -151,7 +145,7 @@ export default function InventoryPage() {
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => load({ showSkeleton: false })}
+              onClick={() => filterProducts()}
               className="shine flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-400 via-emerald-500 to-cyan-400 px-4 py-2 text-sm font-semibold text-slate-900 shadow-lg"
             >
               Filtrar
@@ -253,7 +247,7 @@ function MetricCard({
       <div className="relative flex items-center justify-between">
         <div className="space-y-2">
           <p className="text-xs uppercase tracking-[0.25em] text-slate-500 dark:text-slate-400">{label}</p>
-          <p className={`text-3xl font-bold ${valueClassName ?? "text-slate-900 dark:text-slate-100"}`}>{value}</p>
+          <p className={`${valueClassName ?? "text-slate-900 dark:text-slate-100"} text-3xl font-bold`}>{value}</p>
         </div>
         <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/70 text-emerald-600 shadow-sm dark:bg-slate-900/70 dark:text-emerald-300">
           {icon}
