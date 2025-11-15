@@ -1,0 +1,370 @@
+openapi: 3.0.3
+info:
+  title: SmartStock AI API
+  version: 0.2.1
+servers:
+  - url: http://localhost:8000/api
+paths:
+  /auth/login:
+    post:
+      summary: Login com email e password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string }
+      responses:
+        '200': { description: Token e utilizador }
+        '422': { description: Credenciais inválidas }
+  /auth/register:
+    post:
+      summary: Registar utilizador (público) com auto-login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, password]
+              properties:
+                name: { type: string }
+                email: { type: string, format: email }
+                password: { type: string, minLength: 6 }
+      responses:
+        '201': { description: Criado com token }
+  /auth/me:
+    get:
+      security: [{ bearerAuth: [] }]
+      summary: Dados do utilizador autenticado
+      responses:
+        '200': { description: OK }
+  /auth/logout:
+    post:
+      security: [{ bearerAuth: [] }]
+      summary: Terminar sessão
+      responses:
+        '204': { description: Sessão terminada }
+  /auth/change-password:
+    post:
+      security: [{ bearerAuth: [] }]
+      summary: Alterar password do utilizador autenticado
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [current_password, new_password]
+              properties:
+                current_password: { type: string }
+                new_password: { type: string }
+      responses:
+        '200': { description: Alterada }
+        '422': { description: Password atual incorreta }
+  /users:
+    post:
+      security: [{ bearerAuth: [] }]
+      summary: Criar utilizador (apenas admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, password, role]
+              properties:
+                name: { type: string }
+                email: { type: string }
+                password: { type: string }
+                role: { type: string, enum: [admin, manager, operator] }
+      responses:
+        '201': { description: Criado }
+        '403': { description: Sem permissões }
+  /products:
+    get:
+      security: [{ bearerAuth: [] }]
+      summary: Listar produtos
+      parameters:
+        - in: query
+          name: search
+          schema: { type: string }
+        - in: query
+          name: category
+          schema: { type: string }
+        - in: query
+          name: supplier
+          schema: { type: integer }
+        - in: query
+          name: active
+          schema: { type: boolean }
+        - in: query
+          name: below_min
+          schema: { type: boolean }
+      responses:
+        '200': { description: Lista paginada }
+    post:
+      security: [{ bearerAuth: [] }]
+      summary: Criar produto
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema: { $ref: '#/components/schemas/ProductCreate' }
+      responses:
+        '201': { description: Criado }
+  /products/{id}:
+    get:
+      security: [{ bearerAuth: [] }]
+      summary: Obter produto
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: OK }
+    put:
+      security: [{ bearerAuth: [] }]
+      summary: Atualizar produto
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema: { $ref: '#/components/schemas/ProductUpdate' }
+      responses:
+        '200': { description: Atualizado }
+    delete:
+      security: [{ bearerAuth: [] }]
+      summary: Desativar produto
+      responses:
+        '204': { description: Desativado }
+  /products/{id}/movements:
+    get:
+      security: [{ bearerAuth: [] }]
+      summary: Movimentos de um produto
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Lista paginada }
+  /products/stagnant:
+    get:
+      security: [{ bearerAuth: [] }]
+      summary: Produtos parados
+      parameters:
+        - in: query
+          name: days
+          schema: { type: integer, default: 30 }
+      responses:
+        '200': { description: Lista de produtos parados }
+  /suppliers:
+    get:
+      security: [{ bearerAuth: [] }]
+      summary: Listar fornecedores
+      responses:
+        '200': { description: OK }
+    post:
+      security: [{ bearerAuth: [] }]
+      summary: Criar fornecedor
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SupplierCreate' }
+      responses:
+        '201': { description: Criado }
+  /suppliers/{id}:
+    get:
+      security: [{ bearerAuth: [] }]
+      summary: Mostrar fornecedor
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: OK }
+    put:
+      security: [{ bearerAuth: [] }]
+      summary: Atualizar fornecedor
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SupplierCreate' }
+      responses:
+        '200': { description: Atualizado }
+    delete:
+      security: [{ bearerAuth: [] }]
+      summary: Remover fornecedor
+      responses:
+        '204': { description: Removido }
+  /stock-movements:
+    get:
+      security: [{ bearerAuth: [] }]
+      summary: Listar movimentos
+      parameters:
+        - in: query
+          name: product
+          schema: { type: integer }
+        - in: query
+          name: type
+          schema: { type: string, enum: [IN, OUT] }
+        - in: query
+          name: from
+          schema: { type: string, format: date }
+        - in: query
+          name: to
+          schema: { type: string, format: date }
+      responses:
+        '200': { description: Lista paginada }
+    post:
+      security: [{ bearerAuth: [] }]
+      summary: Criar movimento de stock
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/StockMovementCreate' }
+      responses:
+        '201': { description: Criado }
+        '422': { description: Stock insuficiente }
+  /dashboard:
+    get:
+      security: [{ bearerAuth: [] }]
+      summary: Resumo dashboard
+      responses:
+        '200': { description: OK }
+  /ai/forecast/{product_id}:
+    get:
+      security: [{ bearerAuth: [] }]
+      summary: Previsão de stock
+      parameters:
+        - in: path
+          name: product_id
+          required: true
+          schema: { type: integer }
+        - in: query
+          name: days
+          schema: { type: integer, default: 30 }
+        - in: query
+          name: window
+          schema: { type: integer, default: 14 }
+      responses:
+        '200': { description: Forecast }
+  /ai/recommendations:
+    get:
+      security: [{ bearerAuth: [] }]
+      summary: Recomendações de compra
+      parameters:
+        - in: query
+          name: period
+          schema: { type: integer, default: 14 }
+        - in: query
+          name: window
+          schema: { type: integer, default: 14 }
+      responses:
+        '200': { description: Lista de recomendações }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: Token
+  schemas:
+    User:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        email: { type: string }
+        role: { type: string }
+    Product:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        sku: { type: string }
+        barcode: { type: string }
+        category: { type: string }
+        unit: { type: string }
+        cost_price: { type: number }
+        sale_price: { type: number }
+        min_stock: { type: integer }
+        current_stock: { type: integer }
+        active: { type: boolean }
+    ProductCreate:
+      type: object
+      required: [name, sku, unit, cost_price, min_stock]
+      properties:
+        name: { type: string }
+        sku: { type: string }
+        unit: { type: string }
+        cost_price: { type: number }
+        min_stock: { type: integer }
+    ProductUpdate:
+      type: object
+      properties:
+        name: { type: string }
+        sku: { type: string }
+        unit: { type: string }
+        cost_price: { type: number }
+        min_stock: { type: integer }
+    SupplierCreate:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string }
+        email: { type: string }
+        phone: { type: string }
+        notes: { type: string }
+    StockMovementCreate:
+      type: object
+      required: [product_id, type, quantity, reason]
+      properties:
+        product_id: { type: integer }
+        type: { type: string, enum: [IN, OUT] }
+        quantity: { type: integer }
+        reason: { type: string }
+    Movement:
+      type: object
+      properties:
+        id: { type: integer }
+        product_id: { type: integer }
+        user_id: { type: integer }
+        type: { type: string, enum: [IN, OUT] }
+        quantity: { type: integer }
+        reason: { type: string }
+        occurred_at: { type: string, format: date-time }
+    ForecastResponse:
+      type: object
+      properties:
+        product_id: { type: integer }
+        days: { type: integer }
+        cmd: { type: number }
+        rupture_date: { type: string, nullable: true }
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              date: { type: string, format: date }
+              predicted_stock: { type: integer }
+    RecommendationItem:
+      type: object
+      properties:
+        product_id: { type: integer }
+        sku: { type: string }
+        name: { type: string }
+        current_stock: { type: integer }
+        min_stock: { type: integer }
+        cmd: { type: number }
+        recommended_purchase_qty: { type: integer }
+        reason: { type: string }

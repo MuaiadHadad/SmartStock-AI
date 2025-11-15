@@ -1,0 +1,121 @@
+@import "tailwindcss";
+
+@layer base {
+    /* Dark Mode (padrão) */
+    :root.dark {
+        --bg-primary: rgb(2 6 23);
+        --bg-secondary: rgb(15 23 42);
+        --bg-tertiary: rgb(30 41 59);
+        --text-primary: rgb(248 250 252);
+        --text-secondary: rgb(148 163 184);
+        --border-color: rgb(51 65 85);
+        --accent-color: rgb(16 185 129);
+    }
+
+    /* Light Mode */
+    :root.light {
+        --bg-primary: rgb(248 250 252);
+        --bg-secondary: rgb(241 245 249);
+        --bg-tertiary: rgb(226 232 240);
+        --text-primary: rgb(15 23 42);
+        --text-secondary: rgb(71 85 105);
+        --border-color: rgb(203 213 225);
+        --accent-color: rgb(16 185 129);
+    }
+
+    body {
+        background-color: var(--bg-primary);
+        color: var(--text-primary);
+        transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    /* Scrollbar customizada - Dark */
+    :root.dark ::-webkit-scrollbar-track {
+        background: rgb(15 23 42);
+    }
+
+    :root.dark ::-webkit-scrollbar-thumb {
+        background: rgb(51 65 85);
+    }
+
+    :root.dark ::-webkit-scrollbar-thumb:hover {
+        background: rgb(71 85 105);
+    }
+
+    /* Scrollbar customizada - Light */
+    :root.light ::-webkit-scrollbar-track {
+        background: rgb(241 245 249);
+    }
+
+    :root.light ::-webkit-scrollbar-thumb {
+        background: rgb(203 213 225);
+    }
+
+    :root.light ::-webkit-scrollbar-thumb:hover {
+        background: rgb(148 163 184);
+    }
+
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+}
+
+@layer utilities {
+    /* Animação de slide suave */
+    .slide-in {
+        animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn {
+        from {
+            transform: translateX(-100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    /* Animação de fade */
+    .fade-in {
+        animation: fadeIn 0.3s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+
+    /* Float lenta */
+    .animate-float-slow {
+        animation: floatSlow 6s ease-in-out infinite;
+    }
+
+    @keyframes floatSlow {
+        0% { transform: translateY(0px) translateX(0px); }
+        50% { transform: translateY(-12px) translateX(6px); }
+        100% { transform: translateY(0px) translateX(0px); }
+    }
+
+    /* Glow effect */
+    .glow-emerald {
+        box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+    }
+
+    .glow-emerald:hover {
+        box-shadow: 0 0 30px rgba(16, 185, 129, 0.5);
+    }
+
+    /* Glass effect */
+    .glass {
+        background: rgba(15, 23, 42, 0.7);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(51, 65, 85, 0.5);
+    }
+}
