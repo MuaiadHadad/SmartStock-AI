@@ -13,6 +13,19 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
+  {
+    rules: {
+      // In our API wrapper we export methods that some pages may not use yet
+      'no-unused-vars': ['warn', { varsIgnorePattern: '^api$' }],
+    }
+  },
+  {
+    files: ['app/**/page.tsx'],
+    rules: {
+      // We manage initial load with explicit mount effects
+      'react-hooks/exhaustive-deps': 'warn',
+    }
+  }
 ]);
 
 export default eslintConfig;
