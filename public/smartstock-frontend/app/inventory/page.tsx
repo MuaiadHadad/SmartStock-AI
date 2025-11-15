@@ -59,6 +59,20 @@ export default function InventoryPage() {
     exit: { opacity: 0, y: -8 },
   };
 
+  const metrics = useMemo(() => {
+    const totalProducts = products.length;
+    const lowStock = products.filter(p => p.current_stock <= p.min_stock).length;
+    const totalUnits = products.reduce((acc, p) => acc + p.current_stock, 0);
+    const coverage = totalProducts ? Math.round((1 - lowStock / Math.max(totalProducts, 1)) * 100) : 100;
+    return { totalProducts, lowStock, totalUnits, coverage };
+  }, [products]);
+
+  const rowVariants = {
+    hidden: { opacity: 0, y: 8 },
+    visible: { opacity: 1, y: 0 },
+    exit: { opacity: 0, y: -8 },
+  };
+
   return (
     <Protected>
       <motion.div
