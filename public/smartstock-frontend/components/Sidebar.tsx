@@ -5,17 +5,15 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
     LayoutDashboard,
-    Package,
     TrendingUp,
     Brain,
-    Settings,
     User,
     LogOut,
     Menu,
     ChevronLeft,
     Moon,
     Sun,
-    Boxes
+    Boxes,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -58,25 +56,23 @@ export default function Sidebar() {
             {/* Sidebar */}
             <aside
                 className={`
-                    fixed top-0 left-0 h-screen
-                    bg-slate-50 dark:bg-slate-900/95
-                    backdrop-blur-md
-                    border-r border-slate-200 dark:border-slate-800
-                    shadow-2xl z-50
+                    fixed top-0 left-0 z-50 h-screen
+                    glass-strong backdrop-blur-xl
+                    border border-slate-200/70 dark:border-slate-800/80
                     transition-all duration-300 ease-in-out
                     ${isOpen ? 'w-64' : 'w-20'}
                 `}
             >
                 {/* Header com Logo */}
-                <div className="h-16 flex items-center justify-between px-4 border-b border-slate-200 dark:border-slate-800">
+                <div className="flex h-16 items-center justify-between border-b border-slate-200/70 px-4 dark:border-slate-800/80">
                     <div className={`flex items-center gap-3 transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0'}`}>
-                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-400 to-cyan-500 flex items-center justify-center shadow-lg">
-                            <Brain className="w-5 h-5 text-slate-900" />
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-400 to-cyan-500 shadow-lg">
+                            <Brain className="h-5 w-5 text-slate-900" />
                         </div>
                         {isOpen && (
-                            <h1 className="text-lg font-bold">
-                                <span className="text-emerald-400">Smart</span>
-                                <span className="text-slate-900 dark:text-slate-50">Stock</span>
+                            <h1 className="text-lg font-bold text-slate-800 dark:text-slate-100">
+                                <span className="text-emerald-500">Smart</span>
+                                <span>Stock</span>
                             </h1>
                         )}
                     </div>
@@ -84,11 +80,11 @@ export default function Sidebar() {
                     {/* Botão Toggle */}
                     <button
                         onClick={() => setIsOpen(!isOpen)}
-                        className="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-200"
+                        className="rounded-full p-2 text-slate-500 transition-colors duration-200 hover:bg-slate-200/70 hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/50 dark:text-slate-400 dark:hover:bg-slate-800/70 dark:hover:text-slate-100"
                         aria-label="Toggle menu"
                     >
                         <ChevronLeft
-                            className={`w-5 h-5 text-slate-600 dark:text-slate-400 transition-transform duration-300 ${isOpen ? '' : 'rotate-180'}`}
+                            className={`h-5 w-5 transition-transform duration-300 ${isOpen ? '' : 'rotate-180'}`}
                         />
                     </button>
                 </div>
@@ -106,8 +102,8 @@ export default function Sidebar() {
                                     flex items-center gap-3 px-3 py-3 rounded-lg
                                     transition-all duration-200
                                     ${active
-                                        ? 'bg-emerald-500/20 text-emerald-400 shadow-lg shadow-emerald-500/20'
-                                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200'
+                                        ? 'bg-emerald-500/15 text-emerald-600 shadow-lg shadow-emerald-500/20 dark:bg-emerald-500/20 dark:text-emerald-300'
+                                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/70 hover:text-slate-900 dark:hover:bg-slate-800/70 dark:hover:text-slate-200'
                                     }
                                 `}
                             >
@@ -125,7 +121,7 @@ export default function Sidebar() {
 
                                 {/* Active Indicator */}
                                 {active && (
-                                    <div className="ml-auto w-1 h-6 bg-emerald-400 rounded" />
+                                    <div className="ml-auto h-6 w-1 rounded-full bg-emerald-500 dark:bg-emerald-300" />
                                 )}
                             </Link>
                         );
@@ -133,15 +129,15 @@ export default function Sidebar() {
                 </nav>
 
                 {/* Footer */}
-                <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-200 dark:border-slate-800 space-y-2">
+                <div className="absolute bottom-0 left-0 right-0 space-y-2 border-t border-slate-200/70 p-4 dark:border-slate-800/80">
                     {/* Theme Toggle */}
                     <button
                         onClick={toggleTheme}
                         className={`
                             w-full flex items-center gap-3 px-3 py-3 rounded-lg
                             text-slate-600 dark:text-slate-400
-                            hover:bg-slate-200 dark:hover:bg-slate-800
-                            hover:text-slate-900 dark:hover:text-slate-200
+                            hover:bg-slate-200/70 dark:hover:bg-slate-800/70
+                            hover:text-slate-900 dark:hover:text-slate-100
                             transition-all duration-200 group
                         `}
                         aria-label="Toggle theme"

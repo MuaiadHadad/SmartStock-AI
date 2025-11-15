@@ -2,6 +2,7 @@
 import { usePathname } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
 import { motion } from 'framer-motion';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 export default function AppChrome({ children }: { children: React.ReactNode }){
   const pathname = usePathname();
@@ -9,7 +10,11 @@ export default function AppChrome({ children }: { children: React.ReactNode }){
   const isPublic = publicPaths.includes(pathname);
 
   return (
-    <div className={`relative min-h-screen overflow-hidden bg-slate-50 transition-colors duration-500 dark:bg-slate-950`}>
+    <div className={`relative min-h-screen overflow-hidden bg-slate-100 text-slate-900 transition-colors duration-500 dark:bg-slate-950 dark:text-slate-100`}>
+      <ThemeToggle
+        className={`fixed right-6 top-6 z-50 shadow-lg hover:shadow-xl dark:shadow-none ${isPublic ? '' : 'lg:hidden'}`}
+        label="Alternar modo de cor"
+      />
       {!isPublic && (
         <>
           <div className="pointer-events-none absolute inset-0">
