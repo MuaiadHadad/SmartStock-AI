@@ -144,9 +144,9 @@ docker compose exec -u www-data app php artisan test
 Below are screenshots of the application (from the `demo/` folder):
 
 <p align="center">
-  <img src="demo/Captura%20de%20ecra%CC%83%202025-11-15,%20a%CC%80s%2023.21.46.png" alt="Dashboard Screenshot" width="300" />
-  <img src="demo/Captura%20de%20ecra%CC%83%202025-11-15,%20a%CC%80s%2023.21.57.png" alt="Inventory Screenshot" width="300" />
-  <img src="demo/Captura%20de%20ecra%CC%83%202025-11-15,%20a%CC%80s%2023.22.19.png" alt="Movements Screenshot" width="300" />
+  <img src="demo/1.png" alt="Dashboard Screenshot"/>
+  <img src="demo/2.png" alt="Inventory Screenshot"/>
+  <img src="demo/3.png" alt="Movements Screenshot"/>
 </p>
 
 If images do not render on some platforms due to special characters in file names, consider renaming them (e.g., `demo/dashboard.png`, `demo/inventory.png`, `demo/movements.png`) and updating the paths above.

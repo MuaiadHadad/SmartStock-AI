@@ -84,9 +84,9 @@ MIT (veja LICENSE)
 Screenshots da aplicação (pasta `demo/`):
 
 <p align="center">
-  <img src="demo/Captura%20de%20ecra%CC%83%202025-11-15,%20a%CC%80s%2023.21.46.png" alt="Screenshot Dashboard" width="300" />
-  <img src="demo/Captura%20de%20ecra%CC%83%202025-11-15,%20a%CC%80s%2023.21.57.png" alt="Screenshot Inventário" width="300" />
-  <img src="demo/Captura%20de%20ecra%CC%83%202025-11-15,%20a%CC%80s%2023.22.19.png" alt="Screenshot Movimentos" width="300" />
+  <img src="demo/1.png" alt="Screenshot Dashboard" />
+  <img src="demo/2.png" alt="Screenshot Inventário" />
+  <img src="demo/3.png" alt="Screenshot Movimentos"  />
 </p>
 
 Se as imagens não renderizarem por causa de caracteres especiais nos nomes, considere renomeá-las (ex.: `demo/dashboard.png`, `demo/inventory.png`, `demo/movements.png`) e atualizar os paths.
