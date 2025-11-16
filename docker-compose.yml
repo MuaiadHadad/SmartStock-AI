@@ -1,14 +1,76 @@
 version: "3.9"
 
 services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: smartstock_app
+    restart: unless-stopped
+    env_file:
+      - .env.docker
+    environment:
+      # Ensure Laravel runs in local/dev mode
+      APP_ENV: ${APP_ENV:-local}
+      APP_DEBUG: ${APP_DEBUG:-true}
+      APP_URL: ${APP_URL:-http://localhost:8080}
+      # DB config defaults for Postgres service
+      DB_CONNECTION: ${DB_CONNECTION:-pgsql}
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_DATABASE: ${DB_DATABASE:-smartstock_ai}
+      DB_USERNAME: ${DB_USERNAME:-smartuser}
+      DB_PASSWORD: ${DB_PASSWORD:-smartpass}
+    volumes:
+      - ./:/var/www/html
+      - ./storage:/var/www/html/storage
+    depends_on:
+      - postgres
+    networks:
+      - smartnet
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: smartstock_nginx
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - ./:/var/www/html:ro
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - app
+    networks:
+      - smartnet
+
+  frontend:
+    build:
+      context: ./public/smartstock-frontend
+      dockerfile: Dockerfile
+    container_name: smartstock_frontend
+    restart: unless-stopped
+    working_dir: /app
+    environment:
+      HOST: 0.0.0.0
+      PORT: 3000
+      NODE_ENV: development
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8080}
+    volumes:
+      - ./public/smartstock-frontend:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    networks:
+      - smartnet
+
   postgres:
     image: postgres:15
     container_name: smartstock_postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: smartuser
-      POSTGRES_PASSWORD: smartpass
-      POSTGRES_DB: smartstock_ai
+      POSTGRES_USER: ${DB_USERNAME:-smartuser}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-smartpass}
+      POSTGRES_DB: ${DB_DATABASE:-smartstock_ai}
     ports:
       - "5432:5432"
     volumes:
@@ -21,8 +83,8 @@ services:
     container_name: smartstock_pgadmin
     restart: unless-stopped
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@admin.com
-      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@admin.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
     ports:
       - "5050:80"
     networks:

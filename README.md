@@ -60,57 +60,97 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
 
 # SmartStock AI
 
-Sistema de Gestão de Stock com IA (Laravel + Next.js).
+Full-stack inventory management with AI. Backend: Laravel 12 (PHP 8.2). Frontend: Next.js 16 (React 19). Docker-first dev environment.
 
-## Backend (Laravel)
+- API (Laravel + PHP-FPM) on http://localhost:8080
+- Web (Next.js) on http://localhost:3000
+- PgAdmin on http://localhost:5050
 
-### Instalação
+Read this in Portuguese: README.pt-BR.md
 
-```bash
-composer install
-cp .env.example .env
-php artisan key:generate
-php artisan migrate --seed
-php artisan serve
-```
+## Quick start (Docker)
 
-API base: `http://localhost:8000/api`
+Prerequisites: Docker Desktop 4.24+ and Compose V2.
 
-Usuário admin seed:
-- email: admin@example.com
-- password: admin123
-
-## Frontend (Next.js)
-
-### Instalação
+1) Create environment file for containers (first time only):
 
 ```bash
-cd public/smartstock-frontend
-cp .env.local.example .env.local
-npm install
-npm run dev
+cp .env.docker .env
 ```
 
-Ajuste `NEXT_PUBLIC_API_URL` conforme necessário.
+2) Start everything:
 
-## Fluxo Básico
-1. Aceder a `/login` no frontend para autenticar.
-2. Navegar a `/inventory` para listar produtos.
-3. Usar `/movements` para registar entrada/saída.
-4. Endpoints de IA: forecast e recommendations no backend.
+```bash
+./scripts/docker-up.sh
+```
 
-## Endpoints Principais
-- POST /auth/login
-- GET /products
-- POST /stock-movements
-- GET /ai/forecast/{product}
-- GET /ai/recommendations
+3) Open:
+- API: http://localhost:8080
+- Frontend: http://localhost:3000
+- PgAdmin: http://localhost:5050 (admin@admin.com / admin)
 
-Documentação OpenAPI: `openapi.yaml` na raiz do backend.
+Common maintenance:
 
-## Próximos Passos
-- Policies de autorização
-- Export CSV
-- Ordens de compra
-- Modelo IA avançado
+```bash
+./scripts/migrate.sh          # Run migrations
+./scripts/seed.sh             # Seed database
+./scripts/clear.sh            # Clear Laravel caches
+./scripts/docker-logs.sh      # Tail logs
+./scripts/docker-restart.sh   # Restart services
+./scripts/docker-down.sh      # Stop and remove containers/volumes
+```
 
+## Local (without Docker)
+
+If you prefer running locally:
+
+Backend:
+- PHP 8.2+, Composer, SQLite/Postgres
+- Commands: `composer install && cp .env.example .env && php artisan key:generate && php artisan migrate --seed && php artisan serve`
+
+Frontend:
+- Node.js 20+, pnpm/yarn/npm
+- Commands: `cd public/smartstock-frontend && cp .env.local.example .env.local && npm i && npm run dev`
+
+## Configuration
+
+- Laravel uses Postgres in Docker. Defaults:
+  - Host: postgres, Port: 5432, DB: smartstock_ai, User: smartuser, Pass: smartpass
+- Frontend reads `NEXT_PUBLIC_API_BASE_URL` (defaults to http://localhost:8080)
+- CORS/Sanctum are configured for localhost:3000 and 8080 via `.env.docker`
+
+## Project structure
+
+- backend (Laravel) at repository root
+- frontend (Next.js) in `public/smartstock-frontend`
+- Docker files under `docker/` and helper scripts under `scripts/`
+
+## Testing
+
+Run tests inside the app container:
+
+```bash
+docker compose exec -u www-data app php artisan test
+```
+
+## Troubleshooting
+
+- Port in use: Adjust published ports in `docker-compose.yml`
+- 502 Bad Gateway: ensure `app` container is healthy and PHP-FPM is listening on 9000
+- Migrations fail on first boot: re-run `./scripts/migrate.sh` after Postgres is ready
+
+## Demo
+
+Below are screenshots of the application (from the `demo/` folder):
+
+<p align="center">
+  <img src="demo/Captura%20de%20ecra%CC%83%202025-11-15,%20a%CC%80s%2023.21.46.png" alt="Dashboard Screenshot" width="300" />
+  <img src="demo/Captura%20de%20ecra%CC%83%202025-11-15,%20a%CC%80s%2023.21.57.png" alt="Inventory Screenshot" width="300" />
+  <img src="demo/Captura%20de%20ecra%CC%83%202025-11-15,%20a%CC%80s%2023.22.19.png" alt="Movements Screenshot" width="300" />
+</p>
+
+If images do not render on some platforms due to special characters in file names, consider renaming them (e.g., `demo/dashboard.png`, `demo/inventory.png`, `demo/movements.png`) and updating the paths above.
+
+## License
+
+MIT (see LICENSE)
